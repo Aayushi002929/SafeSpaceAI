@@ -1,0 +1,69 @@
+from langchain.agents import tool
+from tools import query_medgemma
+
+@tool
+def ask_mental_health_specialist(query: str) -> str:
+    """
+    Generate a therapeutic response using the MedGemma model.
+    Use this for all general user queries, mental health questions, emotional concerns,
+    or to offer empathetic, evidence-based guidance in a conversational tone.
+    """
+    return query_medgemma(query)
+
+
+
+
+# Step1: Create an AI Agent & Link to backend
+from langchain_groq import ChatGroq
+from langgraph.prebuilt import create_react_agent
+from config import GROQ_API_KEY
+
+
+tools = [ask_mental_health_specialist]
+llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0.2, api_key=GROQ_API_KEY)
+graph = create_react_agent(llm, tools=tools)
+
+SYSTEM_PROMPT = """
+You are an AI engine supporting mental health conversations with warmth and vigilance.
+You have access to three tools:
+
+`ask_mental_health_specialist`: Use this tool to answer all emotional or psychological queries with therapeutic guidance.
+
+Always take necessary action. Respond kindly, clearly, and supportively.
+"""
+
+def parse_response(stream):
+    tool_called_name = "None"
+    final_response = None
+
+    for s in stream:
+        # Check if a tool was called
+        tool_data = s.get('tools')
+        if tool_data:
+            tool_messages = tool_data.get('messages')
+            if tool_messages and isinstance(tool_messages, list):
+                for msg in tool_messages:
+                    tool_called_name = getattr(msg, 'name', 'None')
+
+        # Check if agent returned a message
+        agent_data = s.get('agent')
+        if agent_data:
+            messages = agent_data.get('messages')
+            if messages and isinstance(messages, list):
+                for msg in messages:
+                    if msg.content:
+                        final_response = msg.content
+
+    return tool_called_name, final_response
+
+
+"""if __name__ == "__main__":
+    while True:
+        user_input = input("User: ")
+        print(f"Received user input: {user_input[:200]}...")
+        inputs = {"messages": [("system", SYSTEM_PROMPT), ("user", user_input)]}
+        stream = graph.stream(inputs, stream_mode="updates")
+        tool_called_name, final_response = parse_response(stream)
+        print("TOOL CALLED: ", tool_called_name)
+        print("ANSWER: ", final_response)"""
+        
