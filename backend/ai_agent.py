@@ -25,7 +25,7 @@ graph = create_react_agent(llm, tools=tools)
 
 SYSTEM_PROMPT = """
 You are an AI engine supporting mental health conversations with warmth and vigilance.
-You have access to three tools:
+You have access to tool:
 
 `ask_mental_health_specialist`: Use this tool to answer all emotional or psychological queries with therapeutic guidance.
 
