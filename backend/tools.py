@@ -43,6 +43,3 @@ def query_medgemma(prompt: str) -> str:
 
 
 
-
-# Step3: Setup Location tool
-
